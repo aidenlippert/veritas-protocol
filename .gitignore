@@ -36,3 +36,21 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# Hardhat
+cache
+artifacts
+typechain-types
+
+# Expo
+.expo
+.expo-shared
+
+# React Native
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/

@@ -1,135 +1,163 @@
-# Turborepo starter
+# Veritas Protocol
 
-This Turborepo starter is maintained by the Turborepo core team.
+**The trust layer for the digital economy.**
 
-## Using this example
+A decentralized professional reputation network built on W3C standards for Decentralized Identifiers (DIDs) and Verifiable Credentials (VCs).
 
-Run the following command:
+## 🏗️ Architecture
 
-```sh
-npx create-turbo@latest
+This is a **Turborepo monorepo** containing all components of the Veritas Protocol:
+
+### Apps
+- **[apps/api](./apps/api)** - NestJS API for credential issuance
+- **[apps/wallet](./apps/wallet)** - React Native (Expo) mobile wallet
+
+### Packages
+- **[packages/contracts](./packages/contracts)** - Solidity smart contracts (Polygon)
+- **[packages/types](./packages/types)** - Shared TypeScript types
+- **[packages/sdk-issuer](./packages/sdk-issuer)** - SDK for issuing credentials
+- **[packages/sdk-verifier](./packages/sdk-verifier)** - SDK for verifying credentials
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js >= 18
+- npm >= 9
+
+### Installation
+
+```bash
+# Install all dependencies
+npm install
+
+# Build all packages
+npm run build
 ```
 
-## What's inside?
+### Running in Development
 
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+```bash
+# Run all apps in dev mode
+npm run dev
 ```
 
-You can build a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+## 📦 Package Scripts
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
+Each package has the following scripts:
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
+```bash
+# Build
+npm run build
 
-### Develop
+# Development mode (with watch)
+npm run dev
 
-To develop all apps and packages, run the following command:
+# Type checking
+npm run check-types
 
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
+# Linting
+npm run lint
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+## 🧪 Sprint 0 Status ✅
 
+**Sprint Goal: Establish professional monorepo with complete dev environment**
+
+All tasks completed:
+
+- ✅ Turborepo monorepo initialized
+- ✅ Hardhat configured for smart contracts
+- ✅ NestJS API application set up
+- ✅ React Native wallet with Expo configured
+- ✅ All core dependencies installed
+- ✅ TypeScript and build tooling configured
+- ✅ .gitignore and environment configuration created
+- ✅ "Hello world" compilation verified for all packages
+
+### Test Results
+
+**Smart Contracts:**
 ```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
+StatusList2021Registry
+  ✔ All 8 tests passing (811ms)
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+**SDK Packages:**
+- ✅ @veritas/types builds successfully
+- ✅ @veritas/sdk-issuer builds successfully
+- ✅ @veritas/sdk-verifier builds successfully
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
+**Applications:**
+- ✅ API builds successfully
+- ✅ Wallet configured and ready
 
+## 🔧 Configuration
+
+### Environment Setup
+
+1. Copy the example environment file:
+```bash
+cp .env.example .env
 ```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
+2. Fill in the required values:
+```env
+# Generate a random private key for the issuer
+ISSUER_PRIVATE_KEY=0x...
+
+# Get a free RPC URL from Alchemy or Infura
+POLYGON_AMOY_RPC_URL=https://polygon-amoy.g.alchemy.com/v2/YOUR_KEY
+
+# For deployment
+DEPLOYER_PRIVATE_KEY=0x...
 ```
 
-## Useful Links
+### Deploy Smart Contracts
 
-Learn more about the power of Turborepo:
+```bash
+cd packages/contracts
 
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+# Deploy to Polygon Amoy testnet
+npm run deploy:testnet
+```
+
+## 🏃‍♂️ Next Steps: Sprint 1
+
+**Sprint Goal:** Complete identity lifecycle - create DID, issue credential, verify signature
+
+Key deliverables:
+1. Deploy RevocationRegistry to Amoy testnet
+2. Identity creation in mobile wallet
+3. Credential issuance API endpoint
+4. End-to-end manual test
+
+## 📚 Technology Stack
+
+- **Blockchain:** Polygon (via Hardhat)
+- **Smart Contracts:** Solidity ^0.8.20, OpenZeppelin
+- **Backend:** NestJS, TypeScript
+- **Mobile:** React Native, Expo
+- **Identity:** W3C DIDs & VCs, ethers.js
+- **Monorepo:** Turborepo
+- **Testing:** Hardhat (contracts), Jest (API)
+
+## 🔐 Security Notes
+
+**For Development Only:**
+- The API uses a hardcoded test key by default
+- **NEVER** commit real private keys
+- **NEVER** use development keys in production
+
+## 📖 Standards Compliance
+
+- [W3C DID v1.0](https://www.w3.org/TR/did-core/)
+- [W3C Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/)
+- [StatusList2021](https://w3c.github.io/vc-status-list-2021/)
+
+## 📄 License
+
+UNLICENSED - Proprietary
+
+---
+
+**Built with precision. Engineered for scale.**
