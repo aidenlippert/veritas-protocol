@@ -139,6 +139,10 @@ async function checkRevocationStatus(
     const listIndex = parseListIndexFromURI(credentialStatus.statusListCredential);
 
     // Check revocation on-chain
+    if (typeof registry.isRevoked !== 'function') {
+      throw new Error('Registry contract does not support isRevoked method');
+    }
+
     const isRevoked = await registry.isRevoked(issuerAddress, listIndex, bitIndex);
 
     return isRevoked;
@@ -157,6 +161,11 @@ function parseListIndexFromURI(uri: string): number {
   // e.g., "https://veritas.id/credentials/status/0" -> 0
   const parts = uri.split('/');
   const lastPart = parts[parts.length - 1];
+
+  if (!lastPart) {
+    throw new Error(`Invalid status list credential URI: ${uri}`);
+  }
+
   const listIndex = parseInt(lastPart, 10);
 
   if (isNaN(listIndex)) {
