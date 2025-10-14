@@ -29,10 +29,17 @@ export class CredentialService {
   }
 
   async issueCredential(options: IssueCredentialOptions) {
+    const subject: ProofOfEmploymentSubject = {
+      id: options.holderDID,
+      ...options.claims,
+    };
+
     return issueCredential({
-      ...options,
+      type: 'ProofOfEmployment',
+      subject,
       issuerPrivateKey: this.issuerPrivateKey,
-      issuerDID: this.issuerDID,
+      issuerDid: this.issuerDID,
+      expiresInDays: options.expirationDate ? undefined : 365,
     });
   }
 

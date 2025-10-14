@@ -116,4 +116,131 @@ describe("StatusList2021Registry", function () {
       expect(statusList & (BigInt(1) << BigInt(255))).to.not.equal(BigInt(0));
     });
   });
+
+  describe("Edge Cases", function () {
+    it("should handle bit index 0", async function () {
+      const listIndex = 0;
+      const bitIndex = 0;
+
+      await registry.connect(issuer).updateStatus(listIndex, bitIndex, true);
+      expect(await registry.isRevoked(issuer.address, listIndex, bitIndex)).to.be.true;
+    });
+
+    it("should handle bit index 255 (maximum)", async function () {
+      const listIndex = 0;
+      const bitIndex = 255;
+
+      await registry.connect(issuer).updateStatus(listIndex, bitIndex, true);
+      expect(await registry.isRevoked(issuer.address, listIndex, bitIndex)).to.be.true;
+    });
+
+    it("should handle large list indices", async function () {
+      const listIndex = 999999;
+      const bitIndex = 128;
+
+      await registry.connect(issuer).updateStatus(listIndex, bitIndex, true);
+      expect(await registry.isRevoked(issuer.address, listIndex, bitIndex)).to.be.true;
+    });
+
+    it("should return false for never-set credentials", async function () {
+      expect(await registry.isRevoked(issuer.address, 0, 0)).to.be.false;
+      expect(await registry.isRevoked(issuer.address, 999, 123)).to.be.false;
+    });
+
+    it("should handle empty batch updates", async function () {
+      await registry.connect(issuer).batchUpdateStatus(0, [], true);
+      // Should not revert
+    });
+
+    it("should handle batch with mixed valid indices", async function () {
+      const listIndex = 0;
+      const bitIndices = [0, 127, 128, 255];
+
+      await registry.connect(issuer).batchUpdateStatus(listIndex, bitIndices, true);
+
+      for (const bitIndex of bitIndices) {
+        expect(await registry.isRevoked(issuer.address, listIndex, bitIndex)).to.be.true;
+      }
+    });
+  });
+
+  describe("Gas Optimization Tests", function () {
+    it("should efficiently handle batch updates", async function () {
+      const listIndex = 0;
+      const bitIndices = Array.from({ length: 50 }, (_, i) => i);
+
+      const tx = await registry.connect(issuer).batchUpdateStatus(listIndex, bitIndices, true);
+      const receipt = await tx.wait();
+
+      // Should complete in reasonable gas
+      expect(receipt?.gasUsed).to.be.lessThan(1000000n);
+    });
+
+    it("should efficiently query revocation status", async function () {
+      const listIndex = 0;
+      const bitIndex = 42;
+
+      await registry.connect(issuer).updateStatus(listIndex, bitIndex, true);
+
+      const gasEstimate = await registry.isRevoked.estimateGas(issuer.address, listIndex, bitIndex);
+      expect(gasEstimate).to.be.lessThan(30000n);
+    });
+  });
+
+  describe("Access Control", function () {
+    it("should allow any address to revoke their own credentials", async function () {
+      const [_, addr1, addr2] = await ethers.getSigners();
+
+      await registry.connect(addr1).updateStatus(0, 1, true);
+      await registry.connect(addr2).updateStatus(0, 2, true);
+
+      expect(await registry.isRevoked(addr1.address, 0, 1)).to.be.true;
+      expect(await registry.isRevoked(addr2.address, 0, 2)).to.be.true;
+    });
+
+    it("should not allow cross-issuer status reads to affect each other", async function () {
+      const [addr1, addr2] = await ethers.getSigners();
+
+      await registry.connect(addr1).updateStatus(0, 5, true);
+
+      // addr2's view should be independent
+      expect(await registry.isRevoked(addr2.address, 0, 5)).to.be.false;
+    });
+  });
+
+  describe("Integration Scenarios", function () {
+    it("should handle rapid credential lifecycle", async function () {
+      const listIndex = 0;
+      const bitIndex = 99;
+
+      // Issue (not revoked)
+      expect(await registry.isRevoked(issuer.address, listIndex, bitIndex)).to.be.false;
+
+      // Revoke
+      await registry.connect(issuer).updateStatus(listIndex, bitIndex, true);
+      expect(await registry.isRevoked(issuer.address, listIndex, bitIndex)).to.be.true;
+
+      // Reactivate
+      await registry.connect(issuer).updateStatus(listIndex, bitIndex, false);
+      expect(await registry.isRevoked(issuer.address, listIndex, bitIndex)).to.be.false;
+
+      // Revoke again
+      await registry.connect(issuer).updateStatus(listIndex, bitIndex, true);
+      expect(await registry.isRevoked(issuer.address, listIndex, bitIndex)).to.be.true;
+    });
+
+    it("should handle multiple concurrent issuers", async function () {
+      const signers = await ethers.getSigners();
+      const numIssuers = 5;
+      const listIndex = 0;
+
+      for (let i = 0; i < numIssuers; i++) {
+        await registry.connect(signers[i]).updateStatus(listIndex, i * 10, true);
+      }
+
+      for (let i = 0; i < numIssuers; i++) {
+        expect(await registry.isRevoked(signers[i].address, listIndex, i * 10)).to.be.true;
+      }
+    });
+  });
 });

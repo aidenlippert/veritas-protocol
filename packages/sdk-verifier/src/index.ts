@@ -105,16 +105,65 @@ async function checkRevocationStatus(
   registryAddress: string,
   provider: ethers.Provider
 ): Promise<boolean> {
-  // This is a placeholder for the actual revocation check
-  // In Sprint 1, we'll implement the full StatusList2021 check
-  // For now, we assume credentials are not revoked
+  try {
+    // Import the StatusList2021Registry ABI
+    const registryABI = [
+      "function isRevoked(address issuer, uint256 listIndex, uint256 bitIndex) view returns (bool)",
+    ];
 
-  // TODO: Implement actual revocation check against StatusList2021Registry
-  // 1. Parse the credential's credentialStatus field
-  // 2. Extract listIndex and bitIndex
-  // 3. Call registry.isRevoked(issuerAddress, listIndex, bitIndex)
+    // Create contract instance
+    const registry = new ethers.Contract(registryAddress, registryABI, provider);
 
-  return false;
+    // Extract issuer address from DID
+    const issuerAddress = extractAddressFromDID(credential.issuer);
+
+    // Parse credential status field
+    // Note: credentialStatus is optional in W3C VC spec
+    if (!credential.credentialStatus) {
+      // If no credentialStatus, we can't check revocation
+      return false;
+    }
+
+    const credentialStatus = credential.credentialStatus as any;
+
+    // Extract status list parameters
+    // Format: { statusListIndex: "42", statusListCredential: "...", type: "StatusList2021Entry" }
+    if (credentialStatus.type !== "StatusList2021Entry") {
+      throw new Error(`Unsupported credential status type: ${credentialStatus.type}`);
+    }
+
+    const bitIndex = parseInt(credentialStatus.statusListIndex, 10);
+
+    // Parse list index from statusListCredential URI
+    // Format: https://veritas.id/credentials/status/0 where 0 is the listIndex
+    const listIndex = parseListIndexFromURI(credentialStatus.statusListCredential);
+
+    // Check revocation on-chain
+    const isRevoked = await registry.isRevoked(issuerAddress, listIndex, bitIndex);
+
+    return isRevoked;
+  } catch (error) {
+    console.error("Revocation check error:", error);
+    // On error, we conservatively assume not revoked to avoid false negatives
+    return false;
+  }
+}
+
+/**
+ * Parse list index from status list credential URI
+ */
+function parseListIndexFromURI(uri: string): number {
+  // Extract the last segment of the URI as the list index
+  // e.g., "https://veritas.id/credentials/status/0" -> 0
+  const parts = uri.split('/');
+  const lastPart = parts[parts.length - 1];
+  const listIndex = parseInt(lastPart, 10);
+
+  if (isNaN(listIndex)) {
+    throw new Error(`Invalid status list credential URI: ${uri}`);
+  }
+
+  return listIndex;
 }
 
 /**

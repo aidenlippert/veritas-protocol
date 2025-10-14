@@ -8,6 +8,17 @@ export interface DID {
   publicKey: string;
 }
 
+/**
+ * Revocation Status
+ */
+export interface RevocationStatus {
+  id: string; // URI to the status list
+  type: "StatusList2021Entry";
+  statusPurpose: "revocation";
+  statusListIndex: string;
+  statusListCredential: string;
+}
+
 export interface VerifiableCredential<T = unknown> {
   "@context": string[];
   id: string;
@@ -16,6 +27,7 @@ export interface VerifiableCredential<T = unknown> {
   issuanceDate: string; // ISO 8601
   expirationDate?: string; // ISO 8601
   credentialSubject: T;
+  credentialStatus?: RevocationStatus; // Optional revocation status
   proof: Proof;
 }
 
@@ -41,6 +53,23 @@ export interface ProofOfEmploymentSubject {
 export type ProofOfEmploymentVC = VerifiableCredential<ProofOfEmploymentSubject>;
 
 /**
+ * GitHub Reputation Credential Subject
+ */
+export interface GitHubReputationSubject {
+  id: string; // DID of the holder
+  username: string;
+  profileUrl: string;
+  reputation: {
+    followers: number;
+    publicRepos: number;
+    accountAge: number; // days since account creation
+  };
+  verifiedAt: string; // ISO 8601
+}
+
+export type GitHubReputationVC = VerifiableCredential<GitHubReputationSubject>;
+
+/**
  * Verifiable Presentation
  * Used when a holder presents one or more VCs to a verifier
  */
@@ -50,15 +79,4 @@ export interface VerifiablePresentation {
   verifiableCredential: VerifiableCredential[];
   proof: Proof;
   holder: string; // DID of the holder
-}
-
-/**
- * Revocation Status
- */
-export interface RevocationStatus {
-  id: string; // URI to the status list
-  type: "StatusList2021Entry";
-  statusPurpose: "revocation";
-  statusListIndex: string;
-  statusListCredential: string;
 }

@@ -1,0 +1,4 @@
+'npx hardhat clean' running (wd: /home/rocz/dawn/veritas-protocol/packages/contracts)
+'npx hardhat clean --global' running (wd: /home/rocz/dawn/veritas-protocol/packages/contracts)
+'npx hardhat compile --force' running (wd: /home/rocz/dawn/veritas-protocol/packages/contracts)
+INFO:Slither:. analyzed (3 contracts with 100 detectors), 0 result(s) found

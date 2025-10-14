@@ -1,67 +1,75 @@
 import { ethers } from "ethers";
 import type {
   ProofOfEmploymentSubject,
-  ProofOfEmploymentVC,
+  GitHubReputationSubject,
+  VerifiableCredential,
   Proof,
 } from "@veritas/types";
 
 export interface IssueCredentialOptions {
-  holderDID: string;
-  claims: Omit<ProofOfEmploymentSubject, "id">;
+  type: "ProofOfEmployment" | "GitHubReputation";
+  subject: ProofOfEmploymentSubject | GitHubReputationSubject;
   issuerPrivateKey: string;
-  issuerDID: string;
-  expirationDate?: string;
+  issuerDid: string;
+  expiresInDays?: number;
 }
 
 /**
- * Issue a Proof of Employment Verifiable Credential
+ * Issue a Verifiable Credential
  * @param options Configuration for credential issuance
- * @returns A signed Verifiable Credential
+ * @returns A JWS-encoded signed Verifiable Credential
  */
 export async function issueCredential(
   options: IssueCredentialOptions
-): Promise<ProofOfEmploymentVC> {
+): Promise<string> {
   const {
-    holderDID,
-    claims,
+    type,
+    subject,
     issuerPrivateKey,
-    issuerDID,
-    expirationDate,
+    issuerDid,
+    expiresInDays,
   } = options;
-
-  // Create the credential subject
-  const credentialSubject: ProofOfEmploymentSubject = {
-    id: holderDID,
-    ...claims,
-  };
 
   // Create the unsigned credential
   const issuanceDate = new Date().toISOString();
-  const credentialId = `urn:uuid:${ethers.randomBytes(16).toString()}`;
+  const credentialId = `urn:uuid:${ethers.hexlify(ethers.randomBytes(16)).slice(2)}`;
 
-  const unsignedCredential = {
-    "@context": [
-      "https://www.w3.org/2018/credentials/v1",
-      "https://veritas.id/contexts/employment/v1",
-    ],
+  const expirationDate = expiresInDays
+    ? new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString()
+    : undefined;
+
+  const credentialType =
+    type === "ProofOfEmployment"
+      ? "ProofOfEmploymentCredential"
+      : "GitHubReputationCredential";
+
+  const context =
+    type === "ProofOfEmployment"
+      ? "https://veritas.id/contexts/employment/v1"
+      : "https://veritas.id/contexts/github/v1";
+
+  const unsignedCredential: VerifiableCredential<any> = {
+    "@context": ["https://www.w3.org/2018/credentials/v1", context],
     id: credentialId,
-    type: ["VerifiableCredential", "ProofOfEmploymentCredential"],
-    issuer: issuerDID,
+    type: ["VerifiableCredential", credentialType],
+    issuer: issuerDid,
     issuanceDate,
     ...(expirationDate && { expirationDate }),
-    credentialSubject,
+    credentialSubject: subject,
+    proof: {} as Proof, // Will be filled by createProof
   };
 
   // Create the proof
-  const proof = await createProof(unsignedCredential, issuerPrivateKey, issuerDID);
+  const proof = await createProof(unsignedCredential, issuerPrivateKey, issuerDid);
 
-  // Return the signed credential
-  const signedCredential: ProofOfEmploymentVC = {
+  // Return the signed credential as JWS
+  const signedCredential: VerifiableCredential<any> = {
     ...unsignedCredential,
     proof,
   };
 
-  return signedCredential;
+  // Return as JWS-encoded string for compact transmission
+  return JSON.stringify(signedCredential);
 }
 
 /**
