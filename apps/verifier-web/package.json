@@ -16,6 +16,10 @@
     "react": "19.1.0",
     "react-dom": "19.1.0"
   },
+  "resolutions": {
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
   "devDependencies": {
     "typescript": "^5",
     "@types/node": "^20",
