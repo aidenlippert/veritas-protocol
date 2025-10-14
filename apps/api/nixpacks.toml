@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["nodejs_18"]
+
+[phases.install]
+cmds = ["cd ../.. && npm install --legacy-peer-deps"]
+
+[phases.build]
+cmds = ["cd ../.. && npm run build --filter=api"]
+
+[start]
+cmd = "npm run start:prod"

@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["nodejs_18"]
+
+[phases.install]
+cmds = ["cd ../.. && npm install --legacy-peer-deps"]
+
+[phases.build]
+cmds = ["cd ../.. && npm run build --filter=verifier-portal"]
+
+[start]
+cmd = "npm run start"
