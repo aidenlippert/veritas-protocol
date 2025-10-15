@@ -4,10 +4,22 @@ import { HDKey } from '@scure/bip32';
 import { sha256 } from '@noble/hashes/sha256';
 import * as SecureStore from 'expo-secure-store';
 import type { DID } from '@veritas/types';
+import { ethers } from 'ethers';
 
 const MNEMONIC_KEY = 'veritas_mnemonic';
 const DID_KEY = 'veritas_did';
 const PRIVATE_KEY = 'veritas_private_key';
+const LINKED_ACCOUNTS_KEY = 'veritas_linked_accounts';
+
+export type Chain = 'evm' | 'solana' | 'bitcoin';
+
+export interface LinkedAccount {
+  chain: Chain;
+  address: string;
+  signature: string;
+  challenge: string;
+  linkedAt: string;
+}
 
 export class IdentityService {
   /**
@@ -194,5 +206,150 @@ export class IdentityService {
     await SecureStore.deleteItemAsync(MNEMONIC_KEY);
     await SecureStore.deleteItemAsync(PRIVATE_KEY);
     await SecureStore.deleteItemAsync(DID_KEY);
+    await SecureStore.deleteItemAsync(LINKED_ACCOUNTS_KEY);
+  }
+
+  // ============================================================================
+  // WALLET LINKING METHODS
+  // ============================================================================
+
+  /**
+   * Generate a unique challenge message for wallet linking
+   * This message will be signed by the wallet to prove ownership
+   */
+  static async generateLinkChallenge(chain: Chain): Promise<string> {
+    const did = await this.getIdentity();
+    if (!did) {
+      throw new Error('No identity found. Create an identity first.');
+    }
+
+    const timestamp = Date.now();
+    const nonce = Math.random().toString(36).substring(2, 15);
+
+    const challenge = `I am proving ownership of this ${chain.toUpperCase()} wallet to my Veritas Identity.\n\nDID: ${did.id}\nChain: ${chain}\nTimestamp: ${timestamp}\nNonce: ${nonce}`;
+
+    return challenge;
+  }
+
+  /**
+   * Verify a signature proving wallet ownership
+   * Returns true if the signature is valid for the given challenge and address
+   */
+  static async verifyLinkSignature(params: {
+    originalMessage: string;
+    signature: string;
+    address: string;
+    chain: Chain;
+  }): Promise<boolean> {
+    const { originalMessage, signature, address, chain } = params;
+
+    try {
+      switch (chain) {
+        case 'evm':
+          return this.verifyEVMSignature(originalMessage, signature, address);
+
+        case 'solana':
+          // TODO: Implement Solana signature verification
+          throw new Error('Solana verification not yet implemented');
+
+        case 'bitcoin':
+          // TODO: Implement Bitcoin signature verification
+          throw new Error('Bitcoin verification not yet implemented');
+
+        default:
+          throw new Error(`Unsupported chain: ${chain}`);
+      }
+    } catch (error) {
+      console.error('Signature verification error:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Verify an EVM wallet signature (Ethereum, Polygon, BSC, etc.)
+   * Uses personal_sign standard (EIP-191)
+   */
+  private static async verifyEVMSignature(
+    message: string,
+    signature: string,
+    expectedAddress: string
+  ): Promise<boolean> {
+    try {
+      // Recover the address from the signature
+      const recoveredAddress = ethers.verifyMessage(message, signature);
+
+      // Compare addresses (case-insensitive)
+      return recoveredAddress.toLowerCase() === expectedAddress.toLowerCase();
+    } catch (error) {
+      console.error('EVM signature verification error:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get all linked accounts
+   */
+  static async getLinkedAccounts(): Promise<LinkedAccount[]> {
+    try {
+      const accountsJson = await SecureStore.getItemAsync(LINKED_ACCOUNTS_KEY);
+      if (!accountsJson) return [];
+      return JSON.parse(accountsJson);
+    } catch (error) {
+      console.error('Error retrieving linked accounts:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Add a new linked account
+   */
+  static async addLinkedAccount(account: LinkedAccount): Promise<void> {
+    try {
+      const accounts = await this.getLinkedAccounts();
+
+      // Check if this account is already linked
+      const existingIndex = accounts.findIndex(
+        (a) => a.chain === account.chain && a.address.toLowerCase() === account.address.toLowerCase()
+      );
+
+      if (existingIndex >= 0) {
+        // Update existing account
+        accounts[existingIndex] = account;
+      } else {
+        // Add new account
+        accounts.push(account);
+      }
+
+      await SecureStore.setItemAsync(LINKED_ACCOUNTS_KEY, JSON.stringify(accounts));
+    } catch (error) {
+      console.error('Error adding linked account:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Remove a linked account
+   */
+  static async removeLinkedAccount(chain: Chain, address: string): Promise<void> {
+    try {
+      const accounts = await this.getLinkedAccounts();
+      const filtered = accounts.filter(
+        (a) => !(a.chain === chain && a.address.toLowerCase() === address.toLowerCase())
+      );
+      await SecureStore.setItemAsync(LINKED_ACCOUNTS_KEY, JSON.stringify(filtered));
+    } catch (error) {
+      console.error('Error removing linked account:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Check if a specific wallet is linked
+   */
+  static async isWalletLinked(chain: Chain, address: string): Promise<boolean> {
+    const accounts = await this.getLinkedAccounts();
+    return accounts.some(
+      (a) => a.chain === chain && a.address.toLowerCase() === address.toLowerCase()
+    );
   }
 }
