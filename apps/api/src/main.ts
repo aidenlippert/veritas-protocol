@@ -29,6 +29,10 @@ async function bootstrap() {
       }
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    exposedHeaders: ['Content-Length', 'Content-Type'],
+    maxAge: 86400,
   });
   console.log('CORS enabled for:', corsOrigins, '+ all vercel.app deployments');
 
