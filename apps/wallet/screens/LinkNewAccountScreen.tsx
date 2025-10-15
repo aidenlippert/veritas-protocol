@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
+import QrScanner from '../components/QrScanner';
 import { IdentityService } from '../services/IdentityService';
 
 type Chain = 'evm' | 'solana' | 'bitcoin';
@@ -219,39 +220,10 @@ export default function LinkNewAccountScreen({ onComplete, onCancel }: LinkNewAc
   if (step === 'scan-proof') {
     return (
       <View style={styles.container}>
-        <View style={styles.content}>
-          <Text style={styles.title}>Scan Signed Proof</Text>
-          <Text style={styles.subtitle}>
-            Scan the QR code from your desktop
-          </Text>
-
-          {/* QR Scanner will go here */}
-          <View style={styles.scannerPlaceholder}>
-            <Text style={styles.scannerText}>📷 Camera Scanner</Text>
-            <Text style={styles.scannerSubtext}>
-              Point your camera at the QR code on your desktop
-            </Text>
-          </View>
-
-          {/* For testing, allow manual input */}
-          <TouchableOpacity
-            style={styles.manualButton}
-            onPress={() => {
-              // For testing: simulate a valid proof
-              const testProof = '0x1234567890abcdef|0xsignature_hex_here';
-              handleProofScanned(testProof);
-            }}
-          >
-            <Text style={styles.manualButtonText}>Manual Input (Testing)</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={() => setStep('display-challenge')}
-          >
-            <Text style={styles.cancelButtonText}>Back</Text>
-          </TouchableOpacity>
-        </View>
+        <QrScanner
+          onScan={handleProofScanned}
+          onCancel={() => setStep('display-challenge')}
+        />
       </View>
     );
   }

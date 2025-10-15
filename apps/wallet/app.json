@@ -13,9 +13,20 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Veritas Wallet to access your camera to scan QR codes for wallet linking."
+        }
+      ]
+    ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.veritas.wallet"
+      "bundleIdentifier": "com.veritas.wallet",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Allow Veritas Wallet to access your camera to scan QR codes for wallet linking."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -25,6 +36,9 @@
       "package": "com.veritas.wallet",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
       "intentFilters": [
         {
           "action": "VIEW",
