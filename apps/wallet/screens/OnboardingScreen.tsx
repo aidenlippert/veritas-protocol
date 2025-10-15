@@ -1,79 +1,154 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { IdentityService } from '../services/IdentityService';
+import SeedPhraseDisplayScreen from './SeedPhraseDisplayScreen';
+import SeedPhraseConfirmScreen from './SeedPhraseConfirmScreen';
 import type { DID } from '@veritas/types';
 
 interface OnboardingScreenProps {
   onIdentityCreated: (did: DID) => void;
 }
 
+type OnboardingStep = 'welcome' | 'display-seed' | 'confirm-seed' | 'success';
+
 export default function OnboardingScreen({ onIdentityCreated }: OnboardingScreenProps) {
+  const [step, setStep] = useState<OnboardingStep>('welcome');
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mnemonic, setMnemonic] = useState<string>('');
+  const [did, setDid] = useState<DID | null>(null);
 
   const handleCreateIdentity = async () => {
     setIsCreating(true);
     setError(null);
 
     try {
-      const did = await IdentityService.createIdentity();
-      onIdentityCreated(did);
+      const { did: newDid, mnemonic: newMnemonic } = await IdentityService.createIdentity();
+      setDid(newDid);
+      setMnemonic(newMnemonic);
+      setStep('display-seed');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create identity');
+    } finally {
       setIsCreating(false);
     }
   };
 
+  const handleSeedDisplayContinue = () => {
+    setStep('confirm-seed');
+  };
+
+  const handleSeedConfirmed = () => {
+    setStep('success');
+    // Show success for 2 seconds before completing onboarding
+    setTimeout(() => {
+      if (did) {
+        onIdentityCreated(did);
+      }
+    }, 2000);
+  };
+
+  // Welcome screen
+  if (step === 'welcome') {
+    return (
+      <View style={styles.container}>
+        <View style={styles.content}>
+          <Text style={styles.title}>Welcome to Veritas</Text>
+          <Text style={styles.subtitle}>
+            Your Sovereign Identity
+          </Text>
+
+          <View style={styles.features}>
+            <FeatureItem
+              emoji="🔐"
+              title="You Own It"
+              text="Your identity, your keys, your control"
+            />
+            <FeatureItem
+              emoji="🌐"
+              title="Universal"
+              text="One identity across all blockchains"
+            />
+            <FeatureItem
+              emoji="✅"
+              title="Verifiable"
+              text="Cryptographically secure credentials"
+            />
+          </View>
+
+          <TouchableOpacity
+            style={[styles.button, isCreating && styles.buttonDisabled]}
+            onPress={handleCreateIdentity}
+            disabled={isCreating}
+          >
+            {isCreating ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Create My Identity</Text>
+            )}
+          </TouchableOpacity>
+
+          {error && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
+
+          <Text style={styles.disclaimer}>
+            By continuing, you agree to be responsible for securely storing your recovery phrase.
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  // Display seed phrase
+  if (step === 'display-seed') {
+    return (
+      <SeedPhraseDisplayScreen
+        mnemonic={mnemonic}
+        onContinue={handleSeedDisplayContinue}
+        onBack={() => setStep('welcome')}
+      />
+    );
+  }
+
+  // Confirm seed phrase
+  if (step === 'confirm-seed') {
+    return (
+      <SeedPhraseConfirmScreen
+        mnemonic={mnemonic}
+        onConfirmed={handleSeedConfirmed}
+        onBack={() => setStep('display-seed')}
+      />
+    );
+  }
+
+  // Success screen
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Welcome to Veritas</Text>
-        <Text style={styles.subtitle}>
-          Your portable professional reputation
-        </Text>
-
-        <View style={styles.features}>
-          <FeatureItem
-            emoji="🔐"
-            text="Own your credentials"
-          />
-          <FeatureItem
-            emoji="✅"
-            text="Verify instantly"
-          />
-          <FeatureItem
-            emoji="🌐"
-            text="Use anywhere"
-          />
+        <View style={styles.successIcon}>
+          <Text style={styles.successEmoji}>🎉</Text>
         </View>
-
-        <TouchableOpacity
-          style={[styles.button, isCreating && styles.buttonDisabled]}
-          onPress={handleCreateIdentity}
-          disabled={isCreating}
-        >
-          {isCreating ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Create My Identity</Text>
-          )}
-        </TouchableOpacity>
-
-        {error && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
+        <Text style={styles.successTitle}>Identity Created!</Text>
+        <Text style={styles.successText}>
+          Your sovereign identity is ready.{'\n'}
+          Welcome to Veritas.
+        </Text>
       </View>
     </View>
   );
 }
 
-function FeatureItem({ emoji, text }: { emoji: string; text: string }) {
+function FeatureItem({ emoji, title, text }: { emoji: string; title: string; text: string }) {
   return (
     <View style={styles.featureItem}>
       <Text style={styles.featureEmoji}>{emoji}</Text>
-      <Text style={styles.featureText}>{text}</Text>
+      <View style={styles.featureContent}>
+        <Text style={styles.featureTitle}>{title}</Text>
+        <Text style={styles.featureText}>{text}</Text>
+      </View>
     </View>
   );
 }
@@ -92,7 +167,7 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
     color: '#1a1a1a',
   },
   subtitle: {
@@ -106,17 +181,27 @@ const styles = StyleSheet.create({
   },
   featureItem: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
+    alignItems: 'flex-start',
+    marginBottom: 24,
     paddingHorizontal: 16,
   },
   featureEmoji: {
-    fontSize: 28,
+    fontSize: 32,
     marginRight: 16,
   },
+  featureContent: {
+    flex: 1,
+  },
+  featureTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginBottom: 4,
+  },
   featureText: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 15,
+    color: '#666',
+    lineHeight: 20,
   },
   button: {
     backgroundColor: '#007AFF',
@@ -125,6 +210,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     height: 56,
+    marginBottom: 16,
   },
   buttonDisabled: {
     opacity: 0.6,
@@ -135,7 +221,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   errorContainer: {
-    marginTop: 16,
+    marginBottom: 16,
     padding: 12,
     backgroundColor: '#fee',
     borderRadius: 8,
@@ -143,5 +229,31 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#c00',
     textAlign: 'center',
+  },
+  disclaimer: {
+    fontSize: 12,
+    color: '#999',
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  successIcon: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  successEmoji: {
+    fontSize: 80,
+  },
+  successTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 16,
+    color: '#1a1a1a',
+  },
+  successText: {
+    fontSize: 18,
+    textAlign: 'center',
+    color: '#666',
+    lineHeight: 26,
   },
 });

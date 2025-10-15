@@ -75,8 +75,8 @@ export async function issueCredential(
 /**
  * Create a cryptographic proof for a credential
  * @param credential The unsigned credential
- * @param privateKey The issuer's private key
- * @param issuerDID The issuer's DID
+ * @param privateKey The issuer's private key (hex string)
+ * @param issuerDID The issuer's DID (did:key or did:ethr)
  * @returns A proof object with JWS signature
  */
 async function createProof(
@@ -84,8 +84,11 @@ async function createProof(
   privateKey: string,
   issuerDID: string
 ): Promise<Proof> {
-  // Create a wallet from the private key
-  const wallet = new ethers.Wallet(privateKey);
+  // Ensure privateKey is hex format
+  const pkHex = privateKey.startsWith('0x') ? privateKey : `0x${privateKey}`;
+
+  // Create a wallet from the private key for signing
+  const wallet = new ethers.Wallet(pkHex);
 
   // Serialize the credential for signing
   const message = JSON.stringify(credential);
