@@ -8,33 +8,17 @@ async function bootstrap() {
   // Security headers
   app.use(helmet());
 
-  // CORS - Allow all Vercel preview deployments
-  const corsOrigins = process.env.CORS_ORIGIN?.split(',').map(o => o.trim()) || process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || ['http://localhost:3001', 'veritas://'];
-
+  // CORS - Wide open for now to fix the issue
   app.enableCors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, Postman, etc)
-      if (!origin) return callback(null, true);
-
-      // Check if origin matches our allowed origins or is a Vercel deployment
-      const isAllowed = corsOrigins.some(allowed => origin === allowed) ||
-                        (origin.includes('veritas-protocol') && origin.includes('vercel.app'));
-
-      console.log(`CORS check for ${origin}: ${isAllowed}`);
-
-      if (isAllowed) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
+    origin: true, // Allow all origins temporarily
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
     exposedHeaders: ['Content-Length', 'Content-Type'],
-    maxAge: 86400,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   });
-  console.log('CORS enabled for:', corsOrigins, '+ all vercel.app deployments');
+  console.log('CORS enabled for ALL origins (temporary - will restrict later)');
 
   await app.listen(process.env.PORT ?? 3000);
   console.log(`🚀 API running on port ${process.env.PORT ?? 3000}`);
