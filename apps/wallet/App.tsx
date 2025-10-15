@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, View, StyleSheet, Alert } from 'react-native';
+import { ActivityIndicator, View, StyleSheet, Alert, TouchableOpacity, Text } from 'react-native';
 import * as Linking from 'expo-linking';
 import { IdentityService } from './services/IdentityService';
 import { CredentialService, type StoredCredential } from './services/CredentialService';
 import OnboardingScreen from './screens/OnboardingScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import PresentCredentialScreen from './screens/PresentCredentialScreen';
+import LinkedAccountsScreen from './screens/LinkedAccountsScreen';
+import LinkNewAccountScreen from './screens/LinkNewAccountScreen';
 import type { DID } from '@veritas/types';
 
-type Screen = 'dashboard' | 'present';
+type Screen = 'dashboard' | 'linked-accounts' | 'present' | 'link-new-account';
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -72,6 +74,14 @@ export default function App() {
     setSelectedCredential(null);
   };
 
+  const handleLinkNewAccount = () => {
+    setCurrentScreen('link-new-account');
+  };
+
+  const handleLinkComplete = () => {
+    setCurrentScreen('linked-accounts');
+  };
+
   const handleAddTestCredential = async () => {
     if (!did) return;
 
@@ -127,32 +137,128 @@ export default function App() {
     );
   }
 
+  // Render the current screen with bottom tab navigation
   return (
     <>
-      {currentScreen === 'dashboard' ? (
-        <DashboardScreen
-          did={did}
-          onPresentCredential={handlePresentCredential}
-          onAddCredential={handleAddTestCredential}
-        />
-      ) : (
-        selectedCredential && (
-          <PresentCredentialScreen
-            credential={selectedCredential}
-            onBack={handleBack}
-          />
-        )
-      )}
+      <View style={styles.container}>
+        {/* Main Content Area */}
+        <View style={styles.content}>
+          {currentScreen === 'dashboard' && (
+            <DashboardScreen
+              did={did}
+              onPresentCredential={handlePresentCredential}
+              onAddCredential={handleAddTestCredential}
+            />
+          )}
+
+          {currentScreen === 'linked-accounts' && (
+            <LinkedAccountsScreen onLinkNewAccount={handleLinkNewAccount} />
+          )}
+
+          {currentScreen === 'present' && selectedCredential && (
+            <PresentCredentialScreen
+              credential={selectedCredential}
+              onBack={handleBack}
+            />
+          )}
+
+          {currentScreen === 'link-new-account' && (
+            <LinkNewAccountScreen
+              onComplete={handleLinkComplete}
+              onCancel={() => setCurrentScreen('linked-accounts')}
+            />
+          )}
+        </View>
+
+        {/* Bottom Tab Navigation (only show on main screens) */}
+        {(currentScreen === 'dashboard' || currentScreen === 'linked-accounts') && (
+          <View style={styles.tabBar}>
+            <TouchableOpacity
+              style={styles.tab}
+              onPress={() => setCurrentScreen('dashboard')}
+            >
+              <Text style={[
+                styles.tabIcon,
+                currentScreen === 'dashboard' && styles.tabIconActive
+              ]}>
+                📋
+              </Text>
+              <Text style={[
+                styles.tabLabel,
+                currentScreen === 'dashboard' && styles.tabLabelActive
+              ]}>
+                Credentials
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.tab}
+              onPress={() => setCurrentScreen('linked-accounts')}
+            >
+              <Text style={[
+                styles.tabIcon,
+                currentScreen === 'linked-accounts' && styles.tabIconActive
+              ]}>
+                🔗
+              </Text>
+              <Text style={[
+                styles.tabLabel,
+                currentScreen === 'linked-accounts' && styles.tabLabelActive
+              ]}>
+                Linked Accounts
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
       <StatusBar style="auto" />
     </>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  content: {
+    flex: 1,
+  },
   loadingContainer: {
     flex: 1,
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#e9ecef',
+    paddingBottom: 24,
+    paddingTop: 8,
+  },
+  tab: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+  },
+  tabIcon: {
+    fontSize: 24,
+    marginBottom: 4,
+    opacity: 0.5,
+  },
+  tabIconActive: {
+    opacity: 1,
+  },
+  tabLabel: {
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '500',
+  },
+  tabLabelActive: {
+    color: '#007AFF',
+    fontWeight: '600',
   },
 });
