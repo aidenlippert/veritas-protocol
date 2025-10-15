@@ -4,7 +4,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { GitHubStrategy } from './github.strategy';
 
-const providers = [AuthService];
+const providers: any[] = [AuthService];
 
 // Only enable GitHub OAuth if credentials are configured
 if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
