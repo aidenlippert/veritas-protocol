@@ -18,7 +18,9 @@ async function bootstrap() {
 
       // Check if origin matches our allowed origins or is a Vercel deployment
       const isAllowed = corsOrigins.some(allowed => origin === allowed) ||
-                        origin.includes('veritas-protocol') && origin.includes('vercel.app');
+                        (origin.includes('veritas-protocol') && origin.includes('vercel.app'));
+
+      console.log(`CORS check for ${origin}: ${isAllowed}`);
 
       if (isAllowed) {
         callback(null, true);
