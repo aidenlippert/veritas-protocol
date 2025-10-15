@@ -1,9 +1,6 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "cd ../.. && npm install --legacy-peer-deps && npm run build --filter=verifier-portal",
   "outputDirectory": ".next",
   "framework": "nextjs",
-  "installCommand": "npm install",
-  "env": {
-    "NEXT_PUBLIC_API_URL": "@veritas-api-url"
-  }
+  "installCommand": "npm install --legacy-peer-deps"
 }
