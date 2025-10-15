@@ -8,8 +8,13 @@ async function bootstrap() {
   // CRITICAL: Enable CORS BEFORE Helmet
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
+      console.log(`[CORS] Origin check: ${origin}`);
+      if (!origin) {
+        console.log('[CORS] No origin - allowing');
+        return callback(null, true);
+      }
       const isAllowed = origin.includes('vercel.app') || origin.includes('localhost') || origin.includes('veritas://');
+      console.log(`[CORS] Origin ${origin} allowed: ${isAllowed}`);
       callback(null, isAllowed);
     },
     credentials: true,
